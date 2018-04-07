@@ -20,7 +20,7 @@ contract Marriage {
     /// It is confidential data, shouldn't be seen by everyone. 
     
     /* Fix_1(2): Put restrict the access of the data */
-    mapping(uint256 => Couple) public coupleData;
+    mapping(uint256 => Couple) private coupleData;
     
     /// @notice true refers to user get married, False refers to opposite
     mapping(address => bool) public isUserMarried;
@@ -30,6 +30,7 @@ contract Marriage {
 
     function Marriage() public {
         /* Fix_2(3):Set the lawyer which publish this contract */
+        address lawyer=msg.sender;
     }
 
     /**
@@ -43,9 +44,9 @@ contract Marriage {
         require(msg.sender == _groom || msg.sender == _bride);
         
         /* Fix_3(3): check that Groom & Bride both are unmarried, otherwise throw */
-        
+        require(_groom.status == MarriageStatus(2) && _bride.status == MarriageStatus(2));
         /* Fix_4(3): check that sent Ether value is equal to the FEE required, otherwise throw */
-        
+        require(feeCollected == Fee);
         feeCollected = feeCollected + Fee;
         lastRegistryNo = lastRegistryNo + 1;
         /// Pass the Marriage Status below to Pending
@@ -64,7 +65,10 @@ contract Marriage {
      */
      function approvedRequest(uint256 _registryNo) public {
      /* Fix_6(5): Write a modifier to check that certain function can only be called by lawyer and associate with this function*/
-     
+        function modifier(){
+         require(msg.sender == lawyer);
+         _;
+     }
          if (coupleData[_registryNo].status == MarriageStatus(2)) {
              coupleData[_registryNo].status = MarriageStatus(1);
          } 
@@ -79,15 +83,29 @@ contract Marriage {
      */
     function divorced(uint256 _registry) public {
         /* Fix_7(8): Asociate right modifier and set the couple status to  Divorced */
+        function modifier(){
+            _registry.status = MarriageStatus(0);
+            _;
+        }
         /* Fix_8(3): Emit the right event related to successful Divorced */
+        event LogDivorced();
     }
 
     /// @notice only be called by the lawyer
     function withdrawEther() public returns(bool) {
         /* Fix_9(10): Associate the right modifier and write logic to transfer all collected ether to the lawyer and return result*/
+        function modifier(){
+        
+         return feeCollected;   
+        }
+        
     }
+    
 
     /* Fix_10(10): Add the fallback function which should prevent transfer of any accidental ether to the contract*/
-
+    function(){
+        revert();
+    }
+    
 
 }
